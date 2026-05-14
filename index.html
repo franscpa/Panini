@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f8fafc">
+<title>⚽ Mi Álbum Panini</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; min-height: 100vh; overscroll-behavior: none; }
+.app { display: flex; flex-direction: column; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+.header { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,0.93); backdrop-filter: blur(16px); border-bottom: 1px solid #f1f5f9; padding: 12px 16px 8px; }
+.header-inner { display: flex; align-items: center; justify-content: space-between; }
+.header h1 { font-size: 17px; font-weight: 900; color: #0f172a; line-height: 1; }
+.header-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.badges { display: flex; gap: 5px; }
+.badge { font-size: 10px; font-weight: 900; padding: 3px 9px; border-radius: 999px; }
+.badge-red { background: #fee2e2; color: #dc2626; }
+.badge-amber { background: #fef3c7; color: #b45309; }
+.content { flex: 1; padding: 14px; overflow-y: auto; padding-bottom: 76px; }
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; z-index: 30; background: rgba(255,255,255,0.96); backdrop-filter: blur(16px); border-top: 1px solid #f1f5f9; padding: 5px 6px; padding-bottom: max(5px, env(safe-area-inset-bottom)); }
+.tabs { display: flex; gap: 3px; }
+.tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 2px; border-radius: 14px; border: none; cursor: pointer; background: transparent; transition: all 0.15s; }
+.tab-btn.active { background: #0f172a; }
+.tab-icon { font-size: 17px; line-height: 1; }
+.tab-label { font-size: 9px; font-weight: 700; color: #94a3b8; }
+.tab-btn.active .tab-label { color: #fff; }
+.hero-card { border-radius: 22px; padding: 20px; color: white; background: linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%); margin-bottom: 16px; position: relative; overflow: hidden; }
+.hero-bg { position: absolute; inset: 0; background: radial-gradient(circle at 20% 80%,rgba(59,130,246,.2) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(245,158,11,.2) 0%,transparent 50%); pointer-events: none; }
+.hero-content { position: relative; z-index: 1; }
+.hero-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: #93c5fd; text-transform: uppercase; margin-bottom: 3px; }
+.hero-pct { font-size: 44px; font-weight: 900; font-family: Georgia,serif; line-height: 1; }
+.hero-pct span { font-size: 22px; color: #93c5fd; }
+.hero-sub { font-size: 12px; color: #bfdbfe; margin: 2px 0 16px; }
+.progress-bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; margin-bottom: 14px; }
+.progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#3b82f6,#f59e0b); transition: width .6s ease; }
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.stat-box { background: rgba(255,255,255,.1); border-radius: 14px; padding: 10px 6px; text-align: center; }
+.stat-val { font-size: 20px; font-weight: 900; }
+.stat-label { font-size: 10px; color: rgba(255,255,255,.6); margin-top: 1px; }
+.section-title { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.section-gap { margin-bottom: 18px; }
+.team-row { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 14px; background: white; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,.04); margin-bottom: 7px; cursor: pointer; transition: all .1s; }
+.team-row:active { transform: scale(.98); }
+.team-flag { font-size: 24px; }
+.team-row-info { flex: 1; }
+.team-row-name { font-size: 12px; font-weight: 700; color: #1e293b; }
+.mini-bar { height: 4px; border-radius: 999px; background: #f1f5f9; margin-top: 4px; overflow: hidden; }
+.mini-fill { height: 100%; border-radius: 999px; }
+.team-missing-count { text-align: right; }
+.team-missing-num { font-size: 20px; font-weight: 900; color: #ef4444; line-height: 1; }
+.team-missing-lbl { font-size: 10px; color: #94a3b8; }
+.complete-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.complete-badge { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 11px; font-weight: 700; color: #15803d; }
+.progress-hero { border-radius: 22px; padding: 18px; background: linear-gradient(135deg,#1e293b,#0f172a); color: white; margin-bottom: 10px; }
+.progress-hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.big-pct { font-size: 48px; font-weight: 900; line-height: 1; }
+.big-sub { font-size: 12px; color: #64748b; margin-top: 3px; }
+.right-count { text-align: right; }
+.right-num { font-size: 26px; font-weight: 900; color: #f87171; }
+.right-lbl { font-size: 10px; color: #64748b; }
+.prog-bar-bg { height: 12px; border-radius: 999px; background: #334155; overflow: hidden; }
+.prog-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#3b82f6,#10b981); transition: width .5s; }
+.prog-axis { display: flex; justify-content: space-between; margin-top: 5px; font-size: 10px; color: #64748b; }
+.progress-team-row { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 14px; background: white; border: 1px solid #f1f5f9; box-shadow: 0 1px 2px rgba(0,0,0,.04); margin-bottom: 5px; cursor: pointer; transition: all .1s; }
+.progress-team-row:active { transform: scale(.98); }
+.prog-flag { font-size: 18px; width: 26px; text-align: center; }
+.prog-info { flex: 1; }
+.prog-row-top { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px; }
+.prog-code { font-weight: 700; color: #334155; }
+.prog-bar-sm { height: 6px; border-radius: 999px; background: #f1f5f9; overflow: hidden; }
+.prog-bar-sm-fill { height: 100%; border-radius: 999px; transition: width .4s; }
+.repeat-badge { font-size: 9px; font-weight: 700; color: #d97706; background: #fffbeb; border-radius: 999px; padding: 2px 7px; white-space: nowrap; }
+.search-row { display: flex; gap: 7px; margin-bottom: 8px; }
+.search-wrap { flex: 1; position: relative; }
+.search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; color: #94a3b8; }
+.search-input { width: 100%; padding: 9px 12px 9px 33px; border-radius: 14px; background: #f1f5f9; border: none; font-size: 14px; font-weight: 500; color: #334155; outline: none; }
+.search-input:focus { box-shadow: 0 0 0 2px #3b82f6; }
+.clear-btn { padding: 9px 13px; border-radius: 14px; background: #e2e8f0; border: none; font-size: 13px; font-weight: 700; color: #475569; cursor: pointer; }
+.filters { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filter-btn { padding: 5px 12px; border-radius: 999px; border: none; font-size: 11px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all .15s; background: #f1f5f9; color: #64748b; }
+.filter-btn.active { background: #1e293b; color: white; }
+.team-block { border-radius: 18px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 1px 4px rgba(0,0,0,.05); margin-bottom: 10px; }
+.team-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: white; border-bottom: 1px solid #f1f5f9; }
+.team-header-flag { font-size: 28px; }
+.team-header-info { flex: 1; }
+.team-header-name { font-size: 14px; font-weight: 900; color: #1e293b; }
+.team-header-sub { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+.team-pct-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+.pct-complete { background: #dcfce7; color: #15803d; }
+.pct-incomplete { background: #fff1f2; color: #dc2626; }
+.stickers-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 5px; padding: 10px; background: #f8fafc; }
+.sticker-btn { aspect-ratio: 1; border-radius: 9px; border: none; font-size: 11px; font-weight: 900; cursor: pointer; transition: all .12s; position: relative; display: flex; align-items: center; justify-content: center; }
+.sticker-btn:active { transform: scale(.86); }
+.sticker-btn.collected { background: #10b981; color: white; box-shadow: 0 2px 5px rgba(16,185,129,.25); }
+.sticker-btn.missing { background: white; border: 2px solid #fecaca; color: #f87171; }
+.sticker-mark { position: absolute; top: -3px; right: -2px; font-size: 7px; line-height: 1; }
+.rep-count { position: absolute; bottom: -3px; right: -3px; background: #f59e0b; color: white; border-radius: 999px; font-size: 7px; font-weight: 900; min-width: 13px; height: 13px; display: flex; align-items: center; justify-content: center; padding: 0 2px; border: 1px solid white; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 10px 9px; background: #f8fafc; }
+.legend-item { display: flex; align-items: center; gap: 3px; font-size: 9px; color: #94a3b8; }
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+.legend-hint { margin-left: auto; font-size: 9px; color: #cbd5e1; font-style: italic; }
+.empty-state { text-align: center; padding: 50px 16px; color: #94a3b8; }
+.empty-icon { font-size: 44px; margin-bottom: 8px; }
+.empty-text { font-weight: 700; }
+.trade-toggle { display: flex; border-radius: 16px; background: #f1f5f9; padding: 4px; margin-bottom: 12px; }
+.toggle-btn { flex: 1; padding: 8px 4px; border-radius: 12px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .2s; background: transparent; color: #64748b; }
+.toggle-btn.active { background: white; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.toggle-btn.active.tmissing { color: #dc2626; }
+.toggle-btn.active.trepeated { color: #d97706; }
+.copy-btn { width: 100%; padding: 13px; border-radius: 16px; border: none; font-size: 13px; font-weight: 900; color: white; cursor: pointer; transition: all .2s; margin-bottom: 12px; }
+.copy-btn.idle { background: #1e293b; }
+.copy-btn.done { background: #10b981; }
+.copy-btn:active { transform: scale(.97); }
+.trade-empty { text-align: center; padding: 44px 16px; color: #94a3b8; }
+.trade-card { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 16px; background: white; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,.04); margin-bottom: 7px; }
+.trade-flag { font-size: 24px; padding-top: 1px; }
+.trade-info { flex: 1; }
+.trade-name { font-size: 12px; font-weight: 700; color: #1e293b; }
+.trade-nums { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.trade-num { font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 999px; }
+.trade-num.tmissing { background: #fff1f2; color: #dc2626; border: 1px solid #fecaca; }
+.trade-num.trepeated { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.trade-count { font-size: 18px; font-weight: 900; padding-top: 2px; }
+.trade-count.tmissing { color: #ef4444; }
+.trade-count.trepeated { color: #f59e0b; }
+.reset-section { margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+.reset-btn { width: 100%; padding: 11px; border-radius: 14px; border: 2px solid #fecaca; background: white; color: #dc2626; font-size: 12px; font-weight: 700; cursor: pointer; }
+.reset-btn:active { background: #fff1f2; }
+.sync-section { margin-top: 16px; border-top: 1px solid #f1f5f9; padding-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.sync-title { font-size: 13px; font-weight: 900; color: #0f172a; margin-bottom: 2px; }
+.sync-sub { font-size: 11px; color: #94a3b8; }
+.sync-btn { width: 100%; padding: 12px; border-radius: 14px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; }
+.sync-btn:active { transform: scale(.97); }
+.sync-btn-export { background: #eff6ff; color: #1d4ed8; border: 2px solid #bfdbfe; }
+.sync-btn-export.done { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.sync-btn-import { background: #f5f3ff; color: #6d28d9; border: 2px solid #ddd6fe; }
+.import-area { width: 100%; min-height: 90px; padding: 10px 12px; border-radius: 14px; border: 2px solid #ddd6fe; background: #faf5ff; font-size: 11px; color: #334155; font-family: monospace; resize: none; outline: none; margin-top: 4px; }
+.import-area:focus { border-color: #7c3aed; }
+.sync-btn-apply { background: #7c3aed; color: white; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 100; display: flex; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
+.modal-sheet { background: white; border-radius: 24px 24px 0 0; padding: 20px; width: 100%; max-width: 480px; }
+.modal-title { font-size: 16px; font-weight: 900; color: #0f172a; margin-bottom: 4px; }
+.modal-sub { font-size: 12px; color: #94a3b8; margin-bottom: 20px; }
+.qty-row { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px; }
+.qty-btn { width: 48px; height: 48px; border-radius: 50%; border: none; font-size: 24px; font-weight: 900; cursor: pointer; background: #f1f5f9; color: #1e293b; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.qty-btn:active { transform: scale(.9); background: #e2e8f0; }
+.qty-val { font-size: 40px; font-weight: 900; color: #f59e0b; min-width: 60px; text-align: center; }
+.modal-actions { display: flex; gap: 8px; }
+.modal-btn { flex: 1; padding: 14px; border-radius: 16px; border: none; font-size: 14px; font-weight: 900; cursor: pointer; }
+.modal-btn-cancel { background: #f1f5f9; color: #64748b; }
+.modal-btn-save { background: #f59e0b; color: white; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-inner">
+      <div>
+        <h1>⚽ Mi Álbum Panini</h1>
+        <div class="header-sub" id="header-sub">Cargando...</div>
+      </div>
+      <div class="badges">
+        <span class="badge badge-red" id="badge-missing">...</span>
+        <span class="badge badge-amber" id="badge-repeated">...</span>
+      </div>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="bottom-nav">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="home" onclick="switchTab('home')"><span class="tab-icon">🏠</span><span class="tab-label">Inicio</span></button>
+      <button class="tab-btn" data-tab="progress" onclick="switchTab('progress')"><span class="tab-icon">📊</span><span class="tab-label">Progreso</span></button>
+      <button class="tab-btn" data-tab="all" onclick="switchTab('all')"><span class="tab-icon">📖</span><span class="tab-label">Álbum</span></button>
+      <button class="tab-btn" data-tab="trade" onclick="switchTab('trade')"><span class="tab-icon">🔄</span><span class="tab-label">Intercambio</span></button>
+      <button class="tab-btn" data-tab="sync" onclick="switchTab('sync')"><span class="tab-icon">📲</span><span class="tab-label">Sincronizar</span></button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="qty-row">
+      <button class="qty-btn" onclick="adjustQty(-1)">−</button>
+      <div class="qty-val" id="modal-qty">0</div>
+      <button class="qty-btn" onclick="adjustQty(1)">+</button>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-btn modal-btn-save" onclick="saveQty()">Guardar</button>
+    </div>
+  </div>
+</div>
+<script>
+const STICKERS_PER_TEAM=20,STORAGE_KEY='panini_v3';
+const TEAM_DATA={"FWC":{flag:"🌍",fullName:"FIFA World Cup",missing:[6,8,19]},"Mx":{flag:"🇲🇽",fullName:"México",missing:[1,3,5,10,17]},"RSA":{flag:"🇿🇦",fullName:"Sudáfrica",missing:[4,11,15,16]},"Kor":{flag:"🇰🇷",fullName:"Corea del Sur",missing:[1,13,17]},"Cze":{flag:"🇨🇿",fullName:"República Checa",missing:[4,17]},"Can":{flag:"🇨🇦",fullName:"Canadá",missing:[1,6]},"Bih":{flag:"🇧🇦",fullName:"Bosnia-Herzegovina",missing:[6,10,15]},"Qat":{flag:"🇶🇦",fullName:"Qatar",missing:[5,9,16,20]},"Sui":{flag:"🇨🇭",fullName:"Suiza",missing:[1,4,5,6,9,13]},"civ":{flag:"🇨🇮",fullName:"Costa de Marfil",missing:[1]},"Bra":{flag:"🇧🇷",fullName:"Brasil",missing:[5,9]},"Mor":{flag:"🇲🇦",fullName:"Marruecos",missing:[4,13]},"Hai":{flag:"🇭🇹",fullName:"Haití",missing:[20]},"Sco":{flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",fullName:"Escocia",missing:[8,12,14,16,17]},"Usa":{flag:"🇺🇸",fullName:"Estados Unidos",missing:[2,4,11,16]},"Par":{flag:"🇵🇾",fullName:"Paraguay",missing:[1,4,7,8,12,14,17,18]},"Aus":{flag:"🇦🇺",fullName:"Australia",missing:[1,6,7,11,15,20]},"Tur":{flag:"🇹🇷",fullName:"Turquía",missing:[1,6,8,10,12,16,19]},"Ger":{flag:"🇩🇪",fullName:"Alemania",missing:[3,4,7,15]},"Cuw":{flag:"🇨🇼",fullName:"Curazao",missing:[10,11,15,19]},"Ecu":{flag:"🇪🇨",fullName:"Ecuador",missing:[2,4,13]},"Neth":{flag:"🇳🇱",fullName:"Países Bajos",missing:[2,7,13,17]},"Jpn":{flag:"🇯🇵",fullName:"Japón",missing:[8,17,20]},"Swe":{flag:"🇸🇪",fullName:"Suecia",missing:[1,12,14,17]},"Tun":{flag:"🇹🇳",fullName:"Túnez",missing:[2,6,7,8,14]},"Bel":{flag:"🇧🇪",fullName:"Bélgica",missing:[11,16,20]},"Egy":{flag:"🇪🇬",fullName:"Egipto",missing:[10,11]},"Nzl":{flag:"🇳🇿",fullName:"Nueva Zelanda",missing:[2,3,6,13,19]},"nor":{flag:"🇳🇴",fullName:"Noruega",missing:[]},"Esp":{flag:"🇪🇸",fullName:"España",missing:[16]},"Cpv":{flag:"🇨🇻",fullName:"Cabo Verde",missing:[5,9,13,14,18]},"Ksa":{flag:"🇸🇦",fullName:"Arabia Saudí",missing:[9,19]},"Uru":{flag:"🇺🇾",fullName:"Uruguay",missing:[3,8,12]},"Fra":{flag:"🇫🇷",fullName:"Francia",missing:[17,18]},"Sen":{flag:"🇸🇳",fullName:"Senegal",missing:[11,13,15,17,19,20]},"Iraq":{flag:"🇮🇶",fullName:"Iraq",missing:[1,2,6,7,10,12,15,16,19,20]},"Arg":{flag:"🇦🇷",fullName:"Argentina",missing:[2,5,14,18]},"Alg":{flag:"🇩🇿",fullName:"Argelia",missing:[5,9,18]},"iran":{flag:"🇮🇷",fullName:"Irán",missing:[]},"Aut":{flag:"🇦🇹",fullName:"Austria",missing:[5,9,20]},"Jor":{flag:"🇯🇴",fullName:"Jordania",missing:[16,20]},"Por":{flag:"🇵🇹",fullName:"Portugal",missing:[9,10,13,15,19,20]},"Cod":{flag:"🇨🇩",fullName:"Congo",missing:[7,8,10,13,14,18]},"Uzb":{flag:"🇺🇿",fullName:"Uzbekistán",missing:[3,7,13]},"Col":{flag:"🇨🇴",fullName:"Colombia",missing:[2,3,6,7,11,16,20]},"Eng":{flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",fullName:"Inglaterra",missing:[5,10,13]},"Cro":{flag:"🇭🇷",fullName:"Croacia",missing:[3,7,10,12,13,18,20]},"Gha":{flag:"🇬🇭",fullName:"Ghana",missing:[1,20]},"Pan":{flag:"🇵🇦",fullName:"Panamá",missing:[2,6,10,13,15,19]}};
+const INITIAL_REPEATED={"Alg":{"2":1,"10":1,"15":1},"Ksa":{"4":1,"8":1,"17":1},"Arg":{"6":1,"7":1,"8":1,"10":1,"11":2,"15":1,"16":2,"19":2,"20":2},"Aus":{"4":1,"5":2,"8":1,"12":2,"13":1,"17":1},"Aut":{"2":1,"6":1,"10":2,"15":2,"19":1},"Bel":{"4":2,"8":1,"9":1,"17":1},"Bra":{"2":1,"6":1,"7":1,"10":1,"18":1},"Cpv":{"2":1,"3":1,"4":1,"10":1,"11":1,"15":1,"16":1,"19":1},"Can":{"3":1,"7":1,"17":1,"18":1},"Qat":{"10":1,"12":1,"14":1},"Col":{"5":1,"8":1,"9":1,"12":1,"14":1,"17":1,"18":1},"Cod":{"4":1},"Kor":{"5":1,"7":1,"10":1,"11":1,"15":1,"20":1},"civ":{"3":2,"6":2,"7":4,"10":1,"11":3,"15":3,"16":2,"20":1},"Ecu":{"10":1,"11":2,"12":3,"14":3,"16":2,"17":3,"18":1},"Egy":{"2":1,"4":1,"5":1,"6":3,"7":1,"12":1,"13":2,"15":1,"20":1},"Sco":{"2":1,"3":2,"6":2,"19":2},"Esp":{"2":1,"3":3,"6":1,"7":1,"10":1,"11":1,"17":1,"18":2,"19":1},"Usa":{"5":2,"9":1,"12":1},"Fra":{"3":1,"4":1,"7":1,"19":1},"Gha":{"2":1,"3":1,"4":2,"5":2,"7":1,"10":1,"11":2,"12":2,"14":1,"16":1,"18":2},"Hai":{"6":2,"7":2,"14":1,"15":1,"16":1,"18":1},"Neth":{"14":1},"Eng":{"8":1,"9":1,"15":1,"16":2,"17":3,"18":2,"20":1},"Iraq":{"3":1,"11":1,"18":1},"iran":{"8":1,"9":3,"11":1,"16":1,"17":1,"18":2,"20":1},"Jpn":{"3":1,"4":1,"19":1,"20":1},"Jor":{"5":1,"8":1,"10":1,"18":1},"Mor":{"6":1,"7":2,"9":1,"10":1,"11":1,"15":1,"16":1,"19":2,"20":2},"Mx":{"8":1,"9":1,"11":1,"12":2,"14":1},"nor":{"1":2,"6":2,"10":2},"Nzl":{"1":3,"10":1,"15":1,"16":1,"20":1},"Pan":{"5":1,"9":2,"12":1,"14":3,"17":1,"18":3},"Par":{"3":2,"15":1,"16":2,"19":1,"20":2},"Por":{"1":1},"Cze":{"5":1,"8":1,"9":1},"Sen":{"1":2,"4":1,"5":3,"8":2,"9":2,"14":1,"18":1},"RSA":{"1":2,"3":1,"5":4,"8":3,"9":2,"10":1,"12":3,"14":2,"17":2,"18":1,"20":3},"Swe":{"7":1,"13":1,"18":1},"Sui":{"3":1,"10":1,"15":1,"19":1},"Tun":{"16":1,"19":1},"Tur":{"9":1},"Uzb":{"16":1,"19":1}};
+let albumState={},repeatedState={},activeTab='home',searchQuery='',filterStatus='all',selectedTeam=null,tradeView='missing',modalTeam=null,modalNum=null,modalTmpQty=0;
+function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const p=JSON.parse(r);albumState=p.album||{};repeatedState=p.repeated||{};ensureTeams();return;}}catch(e){}albumState={};repeatedState={};ensureTeams();Object.entries(INITIAL_REPEATED).forEach(([c,n])=>{if(!repeatedState[c])repeatedState[c]={};Object.entries(n).forEach(([k,v])=>{repeatedState[c][k]=v;});});}
+function ensureTeams(){Object.entries(TEAM_DATA).forEach(([c,d])=>{if(!albumState[c])albumState[c]={};for(let i=1;i<=STICKERS_PER_TEAM;i++){if(albumState[c][i]===undefined)albumState[c][i]=d.missing.includes(i)?'missing':'collected';}if(!repeatedState[c])repeatedState[c]={};});}
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({album:albumState,repeated:repeatedState}));}catch(e){}}
+function getStats(){let c=0,m=0,r=0;Object.values(albumState).forEach(t=>Object.values(t).forEach(s=>{if(s==='collected')c++;else m++;}));Object.values(repeatedState).forEach(t=>Object.values(t).forEach(q=>{r+=q;}));return{collected:c,missing:m,totalRepeated:r,total:Object.keys(TEAM_DATA).length*STICKERS_PER_TEAM};}
+function getTeamStats(){return Object.entries(TEAM_DATA).map(([code,info])=>{const ts=albumState[code]||{};let c=0,m=0;Object.values(ts).forEach(s=>{if(s==='collected')c++;else m++;});const reps=repeatedState[code]||{};const tr=Object.values(reps).reduce((a,b)=>a+b,0);return{code,flag:info.flag,fullName:info.fullName,collected:c,missing:m,repeated:tr,pct:Math.round((c/STICKERS_PER_TEAM)*100)};});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function barColor(p){return p===100?'#10b981':p>60?'#3b82f6':p>30?'#f59e0b':'#ef4444';}
+function updateHeader(){const st=getStats(),pct=Math.round((st.collected/st.total)*100);document.getElementById('header-sub').textContent=`${st.collected}/${st.total} · ${pct}% completo`;document.getElementById('badge-missing').textContent=`${st.missing} faltan`;document.getElementById('badge-repeated').textContent=`${st.totalRepeated} repetidas`;}
+function switchTab(tab){activeTab=tab;if(tab!=='all')selectedTeam=null;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));render();}
+function render(){updateHeader();const el=document.getElementById('content');if(activeTab==='home')el.innerHTML=renderHome();else if(activeTab==='progress')el.innerHTML=renderProgress();else if(activeTab==='all')el.innerHTML=renderAll();else if(activeTab==='trade')el.innerHTML=renderTrade();else if(activeTab==='sync')el.innerHTML=renderSync();}
+function renderHome(){const st=getStats(),pct=Math.round((st.collected/st.total)*100),ts=getTeamStats(),top5=[...ts].sort((a,b)=>b.missing-a.missing).slice(0,5),complete=ts.filter(t=>t.missing===0);return`<div class="hero-card"><div class="hero-bg"></div><div class="hero-content"><div class="hero-label">Álbum Panini · Mundial</div><div class="hero-pct">${pct}<span>%</span></div><div class="hero-sub">del álbum completado</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="stats-grid"><div class="stat-box"><div class="stat-val" style="color:#10b981">${st.collected}</div><div class="stat-label">Tengo</div></div><div class="stat-box"><div class="stat-val" style="color:#ef4444">${st.missing}</div><div class="stat-label">Faltan</div></div><div class="stat-box"><div class="stat-val" style="color:#f59e0b">${st.totalRepeated}</div><div class="stat-label">Repetidas</div></div><div class="stat-box"><div class="stat-val" style="color:#94a3b8">${Object.keys(TEAM_DATA).length}</div><div class="stat-label">Equipos</div></div></div></div></div><div class="section-gap"><div class="section-title">Top — más faltan</div>${top5.map(t=>`<div class="team-row" onclick="goToTeam('${t.code}')"><div class="team-flag">${t.flag}</div><div class="team-row-info"><div class="team-row-name">${esc(t.fullName)}</div><div class="mini-bar"><div class="mini-fill" style="width:${t.pct}%;background:${barColor(t.pct)}"></div></div></div><div class="team-missing-count"><div class="team-missing-num">${t.missing}</div><div class="team-missing-lbl">faltan</div></div></div>`).join('')}</div><div><div class="section-title">Equipos completos 🎉</div><div class="complete-badges">${complete.length===0?'<span style="font-size:12px;color:#94a3b8">Aún no hay equipos completos</span>':complete.map(t=>`<div class="complete-badge">${t.flag} ${esc(t.code)} ✓</div>`).join('')}</div></div>`;}
+function goToTeam(code){selectedTeam=code;switchTab('all');}
+function renderProgress(){const st=getStats(),pct=Math.round((st.collected/st.total)*100),ts=getTeamStats().sort((a,b)=>b.pct-a.pct);return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:17px;font-weight:900;color:#0f172a">Mi Progreso</div><div style="font-size:10px;color:#94a3b8;background:#f1f5f9;padding:3px 9px;border-radius:999px">${Object.keys(TEAM_DATA).length} selecciones</div></div><div class="progress-hero"><div class="progress-hero-top"><div><div class="big-pct">${pct}%</div><div class="big-sub">${st.collected} de ${st.total} estampitas</div></div><div class="right-count"><div class="right-num">${st.missing}</div><div class="right-lbl">pendientes</div></div></div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${pct}%"></div></div><div class="prog-axis"><span>0%</span><span>50%</span><span>100%</span></div></div>${ts.map(t=>`<div class="progress-team-row" onclick="goToTeam('${t.code}')"><div class="prog-flag">${t.flag}</div><div class="prog-info"><div class="prog-row-top"><span class="prog-code">${esc(t.fullName)}</span><span style="font-weight:700;color:${t.pct===100?'#10b981':'#94a3b8'}">${t.pct}%</span></div><div class="prog-bar-sm"><div class="prog-bar-sm-fill" style="width:${t.pct}%;background:${barColor(t.pct)}"></div></div></div>${t.repeated>0?`<div class="repeat-badge">${t.repeated}🔁</div>`:''}</div>`).join('')}`;}
+function renderAll(){const allTeams=getTeamStats();let displayed=selectedTeam?allTeams.filter(t=>t.code===selectedTeam):allTeams.filter(t=>{const ms=t.fullName.toLowerCase().includes(searchQuery.toLowerCase())||t.code.toLowerCase().includes(searchQuery.toLowerCase());const mf=filterStatus==='all'||(filterStatus==='missing'&&t.missing>0)||(filterStatus==='complete'&&t.missing===0)||(filterStatus==='repeated'&&t.repeated>0);return ms&&mf;});return`<div class="search-row"><div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" type="text" placeholder="Buscar selección..." value="${esc(searchQuery)}" oninput="onSearch(this.value)"></div>${selectedTeam?`<button class="clear-btn" onclick="clearTeam()">✕</button>`:''}</div><div class="filters">${[['all','Todas'],['missing','🔴 Faltan'],['complete','✅ Completas'],['repeated','🟡 Repetidas']].map(([id,lbl])=>`<button class="filter-btn ${filterStatus===id?'active':''}" onclick="setFilter('${id}')">${lbl}</button>`).join('')}</div><div style="font-size:10px;color:#94a3b8;margin-bottom:10px;text-align:center">Toca → cambiar estado &nbsp;|&nbsp; Mantén → editar repetidas 🟡</div>${displayed.length===0?`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Sin resultados</div></div>`:displayed.map(t=>renderTeamBlock(t)).join('')}`;}
+function renderTeamBlock(t){const ts=albumState[t.code]||{},reps=repeatedState[t.code]||{};let s='';for(let n=1;n<=STICKERS_PER_TEAM;n++){const st=ts[n]||'missing',qty=reps[n]||0;const mark=st==='collected'?'<span class="sticker-mark">✓</span>':'';const rb=qty>0?`<span class="rep-count">${qty}</span>`:'';s+=`<button class="sticker-btn ${st}" onclick="tapSticker('${t.code}',${n})" oncontextmenu="openModal('${t.code}',${n});return false;" ontouchstart="startLP('${t.code}',${n})" ontouchend="cancelLP()" ontouchmove="cancelLP()">${n}${mark}${rb}</button>`;}return`<div class="team-block" id="block-${t.code}"><div class="team-header"><div class="team-header-flag">${t.flag}</div><div class="team-header-info"><div class="team-header-name">${esc(t.fullName)}</div><div class="team-header-sub" id="sub-${t.code}">${esc(t.code)} · ${t.collected}/${STICKERS_PER_TEAM} · 🟡${t.repeated}</div></div><div class="team-pct-badge ${t.pct===100?'pct-complete':'pct-incomplete'}" id="pct-${t.code}">${t.pct}%</div></div><div class="stickers-grid" id="grid-${t.code}">${s}</div><div class="legend"><div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Tengo</div><div class="legend-item"><div class="legend-dot" style="background:#f87171"></div>Falta</div><div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Repetida</div><span class="legend-hint">Mantén para editar 🟡</span></div></div>`;}
+function tapSticker(code,num){const cur=albumState[code][num]||'missing';albumState[code][num]=cur==='missing'?'collected':'missing';saveState();updateHeader();const grid=document.getElementById(`grid-${code}`);if(grid){const btn=grid.querySelectorAll('.sticker-btn')[num-1];if(btn){const s=albumState[code][num],qty=(repeatedState[code]||{})[num]||0;btn.className=`sticker-btn ${s}`;const mark=s==='collected'?'<span class="sticker-mark">✓</span>':'';const rep=qty>0?`<span class="rep-count">${qty}</span>`:'';btn.innerHTML=`${num}${mark}${rep}`;}}refreshTeamMeta(code);}
+function refreshTeamMeta(code){const ts=getTeamStats().find(x=>x.code===code);if(!ts)return;const pEl=document.getElementById(`pct-${code}`);if(pEl){pEl.textContent=`${ts.pct}%`;pEl.className=`team-pct-badge ${ts.pct===100?'pct-complete':'pct-incomplete'}`;}const sEl=document.getElementById(`sub-${code}`);if(sEl)sEl.textContent=`${code} · ${ts.collected}/${STICKERS_PER_TEAM} · 🟡${ts.repeated}`;}
+let lpTimer=null;
+function startLP(code,num){lpTimer=setTimeout(()=>openModal(code,num),600);}
+function cancelLP(){clearTimeout(lpTimer);}
+function openModal(code,num){cancelLP();modalTeam=code;modalNum=num;modalTmpQty=(repeatedState[code]||{})[num]||0;const info=TEAM_DATA[code];document.getElementById('modal-title').textContent=`${info.flag} ${info.fullName}`;document.getElementById('modal-sub').textContent=`Estampita #${num} — ¿Cuántas repetidas tienes?`;document.getElementById('modal-qty').textContent=modalTmpQty;document.getElementById('modal').style.display='flex';}
+function adjustQty(d){modalTmpQty=Math.max(0,modalTmpQty+d);document.getElementById('modal-qty').textContent=modalTmpQty;}
+function saveQty(){if(!modalTeam||!modalNum)return;if(!repeatedState[modalTeam])repeatedState[modalTeam]={};if(modalTmpQty===0)delete repeatedState[modalTeam][modalNum];else repeatedState[modalTeam][modalNum]=modalTmpQty;saveState();updateHeader();const grid=document.getElementById(`grid-${modalTeam}`);if(grid){const btn=grid.querySelectorAll('.sticker-btn')[modalNum-1];if(btn){const s=albumState[modalTeam][modalNum]||'missing';const mark=s==='collected'?'<span class="sticker-mark">✓</span>':'';const rep=modalTmpQty>0?`<span class="rep-count">${modalTmpQty}</span>`:'';btn.className=`sticker-btn ${s}`;btn.innerHTML=`${modalNum}${mark}${rep}`;}}refreshTeamMeta(modalTeam);closeModal();}
+function closeModal(e){if(e&&e.target!==document.getElementById('modal'))return;document.getElementById('modal').style.display='none';modalTeam=null;modalNum=null;}
+function onSearch(v){searchQuery=v;selectedTeam=null;render();}
+function setFilter(f){filterStatus=f;render();}
+function clearTeam(){selectedTeam=null;render();}
+function renderTrade(){const st=getStats(),ts=getTeamStats(),isMissing=tradeView==='missing',teamList=isMissing?ts.filter(t=>t.missing>0):ts.filter(t=>t.repeated>0);const cards=teamList.map(t=>{if(isMissing){const nums=Object.entries(albumState[t.code]||{}).filter(([,s])=>s==='missing').map(([n])=>Number(n)).sort((a,b)=>a-b);return`<div class="trade-card"><div class="trade-flag">${t.flag}</div><div class="trade-info"><div class="trade-name">${esc(t.fullName)}</div><div class="trade-nums">${nums.map(n=>`<span class="trade-num tmissing">#${n}</span>`).join('')}</div></div><div class="trade-count tmissing">${nums.length}</div></div>`;}else{const reps=repeatedState[t.code]||{};const entries=Object.entries(reps).filter(([,q])=>q>0).map(([n,q])=>({n:Number(n),q})).sort((a,b)=>a.n-b.n);const total=entries.reduce((s,e)=>s+e.q,0);return`<div class="trade-card"><div class="trade-flag">${t.flag}</div><div class="trade-info"><div class="trade-name">${esc(t.fullName)}</div><div class="trade-nums">${entries.map(e=>`<span class="trade-num trepeated">#${e.n}${e.q>1?` x${e.q}`:''}</span>`).join('')}</div></div><div class="trade-count trepeated">${total}</div></div>`;}}).join('');return`<div style="margin-bottom:10px"><div style="font-size:17px;font-weight:900;color:#0f172a">Modo Intercambio</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">Comparte tu lista para intercambiar con amigos</div></div><div class="trade-toggle"><button class="toggle-btn ${tradeView==='missing'?'active tmissing':''}" onclick="setTradeView('missing')">🔴 Faltan (${st.missing})</button><button class="toggle-btn ${tradeView==='repeated'?'active trepeated':''}" onclick="setTradeView('repeated')">🟡 Repetidas (${st.totalRepeated})</button></div><button class="copy-btn idle" id="copy-btn" onclick="copyList()">📋 Copiar lista completa</button>${teamList.length===0?`<div class="trade-empty"><div style="font-size:44px">${isMissing?'🎉':'📦'}</div><div style="font-weight:700;color:#94a3b8;margin-top:8px">${isMissing?'¡No te falta ninguna!':'Sin repetidas aún'}</div></div>`:cards}<div class="reset-section"><div style="font-size:10px;color:#94a3b8;text-align:center;margin-bottom:8px">¿Quieres borrar todo?</div><button class="reset-btn" onclick="resetAlbum()">🗑 Reiniciar álbum</button></div>`;}
+function setTradeView(v){tradeView=v;render();}
+function copyList(){const st=getStats(),ts=getTeamStats(),isMissing=tradeView==='missing';const lines=ts.filter(t=>isMissing?t.missing>0:t.repeated>0).map(t=>{if(isMissing){const nums=Object.entries(albumState[t.code]||{}).filter(([,s])=>s==='missing').map(([n])=>Number(n)).sort((a,b)=>a-b);return`${t.flag} ${t.fullName} (${t.code}): ${nums.join(', ')}`;}else{const reps=repeatedState[t.code]||{};const parts=Object.entries(reps).filter(([,q])=>q>0).map(([n,q])=>({n:Number(n),q})).sort((a,b)=>a.n-b.n).map(e=>`#${e.n}${e.q>1?` x${e.q}`:''}`);return`${t.flag} ${t.fullName} (${t.code}): ${parts.join(', ')}`;}}); const hdr=isMissing?'📋 ESTAMPITAS QUE ME FALTAN':'🔁 ESTAMPITAS REPETIDAS';const cnt=isMissing?st.missing:st.totalRepeated;const text=`${hdr}\n\n${lines.join('\n')}\n\nTotal: ${cnt} estampitas`;const doBtn=()=>{const b=document.getElementById('copy-btn');if(b){b.className='copy-btn done';b.textContent='✓ ¡Lista copiada!';setTimeout(()=>{b.className='copy-btn idle';b.textContent='📋 Copiar lista completa';},2200);}};navigator.clipboard?navigator.clipboard.writeText(text).then(doBtn).catch(()=>fbCopy(text,doBtn)):fbCopy(text,doBtn);}
+function fbCopy(text,cb){const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cb();}catch(e){}document.body.removeChild(ta);}
+function resetAlbum(){if(!confirm('¿Seguro? Esto borrará todos tus cambios guardados.'))return;localStorage.removeItem(STORAGE_KEY);albumState={};repeatedState={};loadState();render();}
+function renderSync(){var h='';h+='<div style="margin-bottom:16px"><div style="font-size:17px;font-weight:900;color:#0f172a">📲 Sincronizar dispositivos</div><div style="font-size:11px;color:#94a3b8;margin-top:3px">Lleva tu progreso a cualquier dispositivo</div></div>';h+='<div style="background:white;border-radius:18px;padding:16px;border:1px solid #f1f5f9;margin-bottom:12px"><div style="font-size:13px;font-weight:900;color:#1d4ed8;margin-bottom:4px">📤 Paso 1 — Exportar</div><div style="font-size:11px;color:#64748b;margin-bottom:12px">Toca el botón, aparecerá un código. Selecciónalo todo, cópialo y mándatelo por WhatsApp o correo a tu otro dispositivo.</div><button class="sync-btn sync-btn-export" onclick="exportData()" style="margin-bottom:10px">📤 Generar mi código</button><div id="export-output" style="display:none"><div style="font-size:11px;color:#15803d;font-weight:700;margin-bottom:6px">✅ Código listo — toca el cuadro y cópialo todo:</div><textarea id="export-text" class="import-area" style="background:#f0fdf4;border-color:#bbf7d0;min-height:100px" readonly></textarea><button class="sync-btn" id="copy-code-btn" style="background:#dcfce7;color:#15803d;border:2px solid #bbf7d0;margin-top:6px" onclick="selectAndCopy(this)">📋 Copiar código</button></div></div>';h+='<div style="background:white;border-radius:18px;padding:16px;border:1px solid #f1f5f9;margin-bottom:12px"><div style="font-size:13px;font-weight:900;color:#6d28d9;margin-bottom:4px">📥 Paso 2 — Importar en otro dispositivo</div><div style="font-size:11px;color:#64748b;margin-bottom:12px">Abre el álbum en el otro dispositivo, ve a esta pestaña y pega el código aquí.</div><textarea class="import-area" id="import-area" placeholder="Pega aquí el código..."></textarea><button class="sync-btn sync-btn-apply" style="margin-top:8px" onclick="importData()">📥 Aplicar código</button></div>';h+='<div style="border-top:1px solid #f1f5f9;padding-top:16px"><div style="font-size:10px;color:#94a3b8;text-align:center;margin-bottom:8px">Zona de peligro</div><button class="reset-btn" onclick="resetAlbum()">🗑 Reiniciar álbum desde cero</button></div>';return h;}
+function exportData(){try{var data=JSON.stringify({album:albumState,repeated:repeatedState});var payload=btoa(unescape(encodeURIComponent(data)));var out=document.getElementById('export-output');var ta=document.getElementById('export-text');if(out)out.style.display='block';if(ta){ta.value=payload;ta.focus();ta.select();}}catch(e){alert('Error: '+e.message);}}
+function selectAndCopy(btn){var ta=document.getElementById('export-text');if(!ta)return;ta.focus();ta.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}if(btn){var orig=btn.textContent;btn.textContent=ok?'✓ ¡Copiado!':'✓ Seleccionado — cópialo manualmente';setTimeout(function(){btn.textContent=orig;},2500);}}
+function importData(){var el=document.getElementById('import-area');var code=el?el.value.trim():'';if(!code){alert('Pega primero el código exportado.');return;}try{var json=decodeURIComponent(escape(atob(code)));var parsed=JSON.parse(json);if(!parsed.album||!parsed.repeated)throw new Error('bad');albumState=parsed.album;repeatedState=parsed.repeated;ensureTeams();saveState();render();alert('✅ Progreso importado correctamente.');}catch(e){alert('❌ Código inválido. Copia el código completo.');}}
+loadState();render();
+</script>
+</body>
+</html>
